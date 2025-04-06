@@ -71,19 +71,26 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// compare password
-	if !auth.ComparePasswords(user.Password, []byte(dto.Password)) {
+	if !auth.ComparePasswords(user.Password, dto.Password) {
 		utils.WriteError(w, http.StatusBadRequest, storage.ErrWrongPassword)
 		return
 	}
 
 	// create JWT
-	token, err := auth.CreateJWT([]byte(config.Cfg.JWTSecret), dto.Login)
+	token, err := auth.CreateJWT(
+		dto.Login,
+		auth.JWTParams{
+			Secret:   []byte(config.Cfg.JWTSecret),
+			Duration: config.Cfg.JWTDuration,
+		},
+	)
+
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, map[string]string{"token": token})
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"jwt_token": token})
 }
 
 func (h *Handler) handleGetAll(w http.ResponseWriter, r *http.Request) {

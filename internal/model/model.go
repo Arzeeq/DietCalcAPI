@@ -17,4 +17,11 @@ type User struct {
 }
 
 type Product struct {
+	Id        uint32
+	Name      pgtype.Text
+	Calories  pgtype.Numeric
+	Proteins  pgtype.Numeric
+	Fats      pgtype.Numeric
+	Carbs     pgtype.Numeric
+	UserLogin pgtype.Text
 }

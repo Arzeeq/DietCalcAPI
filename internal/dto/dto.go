@@ -15,3 +15,14 @@ type User struct {
 	Purpose   pgtype.Text    `json:"purpose"`
 	CreatedAt time.Time      `json:"created_at"`
 }
+
+type Product struct {
+	Id        uint32         `json:"id"`
+	Name      pgtype.Text    `json:"name"`
+	Calories  pgtype.Numeric `json:"calories"`
+	Proteins  pgtype.Numeric `json:"proteins"`
+	Fats      pgtype.Numeric `json:"fats"`
+	Carbs     pgtype.Numeric `json:"carbs"`
+	UserLogin pgtype.Text    `json:"user_login"`
+	JWTToken  string         `json:"jwt_token"`
+}

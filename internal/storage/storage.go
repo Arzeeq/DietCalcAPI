@@ -20,4 +20,6 @@ type UserStorager interface {
 }
 
 type ProductStorager interface {
+	Create(ctx context.Context, dto dto.Product) error
+	GetById(ctx context.Context, dto dto.Product) (*model.Product, error)
 }

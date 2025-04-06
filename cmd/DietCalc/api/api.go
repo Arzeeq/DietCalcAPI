@@ -4,8 +4,9 @@ import (
 	"context"
 	"dietcalc/internal/config"
 	"dietcalc/internal/logger"
+	"dietcalc/internal/service/product"
 	"dietcalc/internal/service/user"
-	postgres "dietcalc/internal/storage/postgres/user"
+	"dietcalc/internal/storage/postgres"
 	"dietcalc/utils"
 	"fmt"
 	"log/slog"
@@ -31,13 +32,16 @@ func Run() {
 
 	// creating storages
 	userStorage := postgres.NewUserStorage(pool)
+	productStorage := postgres.NewProductStorage(pool)
 
 	// creating handlers
 	userHandler := user.NewHandler(userStorage)
+	productHandler := product.NewHandler(productStorage)
 
 	// mounting router
 	r := chi.NewRouter()
 	r.Mount("/user", user.NewRouter(userHandler))
+	r.Mount("/product", product.NewRouter(productHandler))
 
 	// listen port
 	logger.Info(fmt.Sprintf("listening %s", config.Cfg.Address))
