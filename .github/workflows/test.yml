@@ -2,7 +2,7 @@ on:
   workflow_call:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-24.04
 
     steps:
@@ -12,7 +12,5 @@ jobs:
         uses: actions/setup-go@v5
         with: 
           go-version: 1.23.1
-      - name: Build
-        run: go build -v ./...
       - name: Test
-        run: go test
+        run: go test -v ./...
