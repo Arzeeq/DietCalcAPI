@@ -20,6 +20,9 @@ func Run() {
 	// Setting up logger
 	log := logger.New(config.Cfg.Env)
 	log.Info("starting DietCalc", slog.String("env", config.Cfg.Env))
+	defer func() {
+		log.Info("DietCalc finished")
+	}()
 
 	// Initialize pool of connections
 	pool, err := initDB()
@@ -39,11 +42,13 @@ func Run() {
 
 	// mounting router
 	r := chi.NewRouter()
-	r.Mount("/user", user.NewRouter(userHandler))
-	r.Mount("/product", product.NewRouter(productHandler))
+	r.Route(config.Cfg.Prefix, func(router chi.Router) {
+		router.Mount("/user", user.NewRouter(userHandler))
+		router.Mount("/product", product.NewRouter(productHandler))
+	})
 
 	// listen port
-	log.Info(fmt.Sprintf("listening %s", config.Cfg.Address))
+	log.Info(fmt.Sprintf("listening %s%s", config.Cfg.Address, config.Cfg.Prefix))
 	err = http.ListenAndServe(config.Cfg.Address, r)
 	log.Error("application DietCalc finished with error", logger.ErrAttr(err))
 }

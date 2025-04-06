@@ -32,7 +32,8 @@ type Config struct {
 type HTTPServer struct {
 	Address     string        `yaml:"address" env-default:"localhost:8080"`
 	Timeout     time.Duration `yaml:"timeout" env-default:"4s"`
-	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"60s"`
+	IdleTimeout time.Duration `yaml:"idle_timeout" env-default:"30s"`
+	Prefix      string        `yaml:"prefix" env-default:"/"`
 }
 
 type DBParam struct {

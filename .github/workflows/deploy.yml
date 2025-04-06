@@ -1,0 +1,39 @@
+name: Dev Deploy
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+
+env:
+  SERVER_HOST: 104.238.29.139
+  SERVER_USER: prj
+  SERVER_PATH: /home/prj/DietCalc
+  BRANCH: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+
+jobs:
+  linter:
+    uses: Arzeeq/DietCalcAPI/.github/workflows/golangci-lint.yml@main
+
+  test:
+    needs: linter
+    uses: Arzeeq/DietCalcAPI/.github/workflows/test.yml@main
+
+  deploy:
+    needs: test
+    steps:
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2.3.1
+        with:
+          key: "${{ secrets.SSH_KEY }}"
+          known_hosts: "just-a-placeholder-so-we-dont-get-errors"
+          
+      - name: Generate auth hosts
+        run: ssh-keyscan -H ${{ env.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      # Deploy
+      - run: rsync --archive --compress --progress . ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.SERVER_PATH }}/${{ env.BRANCH }}
