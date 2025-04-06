@@ -11,6 +11,7 @@ permissions:
 
 env:
   SERVER_PATH: /home/prj/DietCalc/${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+  BRANCH: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
 
 jobs:
   linter:
@@ -36,3 +37,23 @@ jobs:
 
       # Deploy
       - run: rsync --archive --compress --progress . ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_PATH }}
+
+      - name: Build
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ${{ env.SERVER_PATH }}
+            go build -C ./cmd/DietCalc
+            chmod u+x ./cmd/DietCalc/DietCalc
+
+      - name: Restart service
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            sudo systemctl restart api-${{ env.BRANCH }}.service
