@@ -34,7 +34,7 @@ func TestGetClaimsJWT(t *testing.T) {
 	claims, err := GetClaimsJWT(token, jwtParams)
 	require.NoError(t, err, "Failed to get claims")
 
-	claimsDuration := claims.ExpiresAt.Time.Sub(claims.IssuedAt.Time)
+	claimsDuration := claims.ExpiresAt.Sub(claims.IssuedAt.Time)
 
 	require.Equal(t, jwtDuration, claimsDuration, "Incorrect duration")
 	require.Equal(t, login, claims.Login, "Incorrect login")
