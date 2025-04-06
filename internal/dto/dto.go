@@ -1,6 +1,10 @@
 package dto
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -25,4 +29,18 @@ type Product struct {
 	Carbs     pgtype.Numeric `json:"carbs"`
 	UserLogin pgtype.Text    `json:"user_login"`
 	JWTToken  string         `json:"jwt_token"`
+}
+
+func Parse(r io.Reader, payload any) error {
+	if r == nil {
+		return fmt.Errorf("parsing from nil reader")
+	}
+
+	return json.NewDecoder(r).Decode(payload)
+}
+
+func Write(w http.ResponseWriter, status int, dto any) error {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(status)
+	return json.NewEncoder(w).Encode(dto)
 }

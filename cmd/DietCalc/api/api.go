@@ -7,7 +7,6 @@ import (
 	"dietcalc/internal/service/product"
 	"dietcalc/internal/service/user"
 	"dietcalc/internal/storage/postgres"
-	"dietcalc/utils"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -19,13 +18,13 @@ import (
 
 func Run() {
 	// Setting up logger
-	logger := logger.Setup(config.Cfg.Env)
-	logger.Info("starting DietCalc", slog.String("env", config.Cfg.Env))
+	log := logger.New(config.Cfg.Env)
+	log.Info("starting DietCalc", slog.String("env", config.Cfg.Env))
 
 	// Initialize pool of connections
 	pool, err := initDB()
 	if err != nil {
-		logger.Error("failed to init database", utils.ErrAttr(err))
+		log.Error("failed to init database", logger.ErrAttr(err))
 		os.Exit(1)
 	}
 	defer pool.Close()
@@ -35,8 +34,8 @@ func Run() {
 	productStorage := postgres.NewProductStorage(pool)
 
 	// creating handlers
-	userHandler := user.NewHandler(userStorage)
-	productHandler := product.NewHandler(productStorage)
+	userHandler := user.NewHandler(userStorage, log)
+	productHandler := product.NewHandler(productStorage, log)
 
 	// mounting router
 	r := chi.NewRouter()
@@ -44,8 +43,9 @@ func Run() {
 	r.Mount("/product", product.NewRouter(productHandler))
 
 	// listen port
-	logger.Info(fmt.Sprintf("listening %s", config.Cfg.Address))
-	http.ListenAndServe(config.Cfg.Address, r)
+	log.Info(fmt.Sprintf("listening %s", config.Cfg.Address))
+	err = http.ListenAndServe(config.Cfg.Address, r)
+	log.Error("application DietCalc finished with error", logger.ErrAttr(err))
 }
 
 func initDB() (*pgxpool.Pool, error) {

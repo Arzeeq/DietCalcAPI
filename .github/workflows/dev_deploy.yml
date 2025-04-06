@@ -1,0 +1,17 @@
+name: Dev Deploy
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions:
+  contents: read
+
+jobs:
+  linter:
+    uses: Arzeeq/DietCalcAPI/.github/workflows/golangci-lint.yml@main
+
+  test:
+    needs: linter
+    uses: Arzeeq/DietCalcAPI/.github/workflows/test.yml@main

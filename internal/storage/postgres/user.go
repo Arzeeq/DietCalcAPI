@@ -55,11 +55,11 @@ func (s *UserStorage) GetAll(ctx context.Context) ([]model.User, error) {
 	return users, nil
 }
 
-func (s *UserStorage) GetByLogin(ctx context.Context, dto dto.User) (*model.User, error) {
+func (s *UserStorage) GetByLogin(ctx context.Context, login string) (*model.User, error) {
 	query := `SELECT * FROM "users" WHERE login = @login;`
 
 	args := pgx.NamedArgs{
-		"login": dto.Login,
+		"login": login,
 	}
 
 	rows, err := s.pool.Query(ctx, query, args)
@@ -75,4 +75,9 @@ func (s *UserStorage) GetByLogin(ctx context.Context, dto dto.User) (*model.User
 	}
 
 	return &user, nil
+}
+
+func (s *UserStorage) CheckByLogin(ctx context.Context, login string) bool {
+	_, err := s.GetByLogin(ctx, login)
+	return err == nil
 }

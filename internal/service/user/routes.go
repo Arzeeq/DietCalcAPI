@@ -4,9 +4,10 @@ import (
 	"context"
 	"dietcalc/internal/config"
 	"dietcalc/internal/dto"
+	"dietcalc/internal/logger"
 	"dietcalc/internal/service/auth"
 	"dietcalc/internal/storage"
-	"dietcalc/utils"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -15,39 +16,39 @@ import (
 
 type Handler struct {
 	store storage.UserStorager
+	log   *logger.MyLogger
 }
 
-func NewHandler(store storage.UserStorager) *Handler {
-	return &Handler{store: store}
+func NewHandler(store storage.UserStorager, log *logger.MyLogger) *Handler {
+	return &Handler{store: store, log: log}
 }
 
 func (h *Handler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	// parse request body
-	var dto dto.User
-	if err := utils.ParseJSON(r, &dto); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
+	var userDto dto.User
+	if err := dto.Parse(r.Body, &userDto); err != nil {
+		h.log.ReplyHTTPError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// check if user is already created
-	_, err := h.store.GetByLogin(context.Background(), dto)
-	if err == nil {
-		utils.WriteError(w, http.StatusConflict, storage.ErrExists)
+	if h.store.CheckByLogin(context.Background(), userDto.Login) {
+		h.log.ReplyHTTPError(w, http.StatusConflict, storage.ErrExists)
 		return
 	}
 
 	// set creation time and hash user password
-	dto.CreatedAt = time.Now()
-	pass, err := auth.HashPassword(dto.Password)
+	userDto.CreatedAt = time.Now()
+	pass, err := auth.HashPassword(userDto.Password)
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
+		h.log.ReplyHTTPError(w, http.StatusInternalServerError, err)
 		return
 	}
-	dto.Password = pass
+	userDto.Password = pass
 
 	// store user
-	if err := h.store.Create(context.Background(), dto); err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
+	if err := h.store.Create(context.Background(), userDto); err != nil {
+		h.log.ReplyHTTPError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -57,28 +58,29 @@ func (h *Handler) handleCreate(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	// parse request body
-	var dto dto.User
-	if err := utils.ParseJSON(r, &dto); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
+	var userDto dto.User
+
+	if err := dto.Parse(r.Body, &userDto); err != nil {
+		h.log.ReplyHTTPError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// get user from storage
-	user, err := h.store.GetByLogin(context.Background(), dto)
+	user, err := h.store.GetByLogin(context.Background(), userDto.Login)
 	if err != nil {
-		utils.WriteError(w, http.StatusNotFound, storage.ErrNotFound)
+		h.log.ReplyHTTPError(w, http.StatusNotFound, storage.ErrNotFound)
 		return
 	}
 
 	// compare password
-	if !auth.ComparePasswords(user.Password, dto.Password) {
-		utils.WriteError(w, http.StatusBadRequest, storage.ErrWrongPassword)
+	if !auth.ComparePasswords(user.Password, userDto.Password) {
+		h.log.ReplyHTTPError(w, http.StatusBadRequest, storage.ErrWrongPassword)
 		return
 	}
 
 	// create JWT
 	token, err := auth.CreateJWT(
-		dto.Login,
+		userDto.Login,
 		auth.JWTParams{
 			Secret:   []byte(config.Cfg.JWTSecret),
 			Duration: config.Cfg.JWTDuration,
@@ -86,27 +88,19 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
+		h.log.ReplyHTTPError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, map[string]string{"jwt_token": token})
-}
-
-func (h *Handler) handleGetAll(w http.ResponseWriter, r *http.Request) {
-	users, err := h.store.GetAll(context.Background())
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
-		return
+	w.Header().Add("Content-Type", "application/json")
+	if err = json.NewEncoder(w).Encode(map[string]string{"jwt_token": token}); err != nil {
+		h.log.Error("failed to write jwt_token", logger.ErrAttr(err))
 	}
-
-	utils.WriteJSON(w, http.StatusOK, users)
 }
 
 func NewRouter(h *Handler) *chi.Mux {
 	r := chi.NewRouter()
 	r.Post("/", h.handleCreate)
 	r.Post("/login", h.handleLogin)
-	r.Get("/", h.handleGetAll)
 	return r
 }

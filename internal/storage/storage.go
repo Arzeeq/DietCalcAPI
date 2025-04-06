@@ -16,7 +16,8 @@ var (
 type UserStorager interface {
 	Create(ctx context.Context, dto dto.User) error
 	GetAll(ctx context.Context) ([]model.User, error)
-	GetByLogin(ctx context.Context, dto dto.User) (*model.User, error)
+	GetByLogin(ctx context.Context, login string) (*model.User, error)
+	CheckByLogin(tx context.Context, login string) bool
 }
 
 type ProductStorager interface {
