@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  SERVER_PATH: /home/prj/DietCalc/${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+  SERVER_PATH: ~/DietCalc/${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
   BRANCH: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
 
 jobs:
@@ -45,9 +45,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd ${{ env.SERVER_PATH }}
-            go build -C ./cmd/DietCalc
-            chmod u+x ./cmd/DietCalc/DietCalc
+            cd ${{ env.SERVER_PATH }}/cmd/DietCalc
+            go build
+            chmod u+x DietCalc
 
       - name: Restart service
         uses: appleboy/ssh-action@v1.0.0
