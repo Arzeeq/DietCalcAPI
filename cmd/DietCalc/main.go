@@ -20,6 +20,7 @@ func main() {
 }
 
 // TODO:
+// 0) check deploying + make services + check in postman
 // 1) Product must be created only by user (jwt)
 // 2) Add page + limit in getall
 // 3) Make CRUD for meal
