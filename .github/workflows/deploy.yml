@@ -41,6 +41,9 @@ jobs:
       - name: Docker Compose
         uses: appleboy/ssh-action@v1.0.0
         with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
             cd ${{ env.SERVER_PATH }}
             docker-compose up ${{ env.BRANCH }}

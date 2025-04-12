@@ -10,6 +10,7 @@ FROM alpine:latest as base
 WORKDIR /root
 COPY --from=builder /app/dietcalc .
 COPY --from=builder /app/internal/storage/postgres/migrations ./migrations
+COPY --from=builder /app/configs ./configs
 RUN apk --no-cache add ca-certificates
 
 # Stage dev
