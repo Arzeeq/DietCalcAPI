@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
@@ -53,6 +55,8 @@ func MustLoad() *Config {
 	}
 
 	if _, err := os.Stat(configPath); err != nil {
+		fmt.Println(os.Executable())
+		exec.Command("ls", "-R")
 		log.Fatalf("Cannot find config file %s", configPath)
 	}
 

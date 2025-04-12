@@ -46,4 +46,4 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd ${{ env.SERVER_PATH }}
-            docker-compose up ${{ env.BRANCH }}
+            sudo docker-compose up ${{ env.BRANCH }}
