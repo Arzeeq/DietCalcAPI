@@ -38,22 +38,9 @@ jobs:
       # Deploy
       - run: rsync --archive --compress --progress . ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_PATH }}
 
-      - name: Build
+      - name: Docker Compose
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
           script: |
-            cd ${{ env.SERVER_PATH }}/cmd/DietCalc
-            go build
-            chmod u+x DietCalc
-
-      - name: Restart service
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            sudo systemctl restart api-${{ env.BRANCH }}.service
+            cd ${{ env.SERVER_PATH }}
+            docker-compose up ${{ env.BRANCH }}
